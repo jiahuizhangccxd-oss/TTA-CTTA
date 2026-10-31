@@ -1,0 +1,339 @@
+schema_version: 1
+suite: papertrace-product-surfaces
+
+cases:
+  - case_id: PRODUCT-STATUS-001
+    language: zh
+    prompt: 已明确确认你展示的本次进展摘要差异；基于 02_RESEARCH.md 与已给出的实际产物更新现有 paper/core/07_PROGRESS.md，指出实验已运行但证据尚不足的部分，并链接现有 evidence matrix；只更新进展，不复制作者批准或新增状态系统。
+    expected_primary: 01-project-brief
+    expected_primary_surface: governance
+    must_change_product: true
+    audit_allowed: false
+    must_not_trigger: [08-markdown-draft, 06-experiment-ops, peer-review]
+    must_not_surface: [自动批准, 完成百分比, status controller, generated scientific results]
+
+  - case_id: PRODUCT-CODE-001
+    language: en
+    prompt: Fix the tensor-shape bug in the tokenizer, update the relevant source code and regression test, and run the targeted test. Do not stop after explaining the module or updating MODULE_MAP.md.
+    expected_primary: code-change
+    expected_primary_surface: code
+    must_change_product: true
+    audit_allowed: false
+    must_not_trigger: [code-module-xray, 07-experiment-audit]
+    must_not_surface: [canonical_delta, route packet, audit chain, human gate]
+
+  - case_id: PRODUCT-MANUSCRIPT-001
+    language: en
+    prompt: Rewrite the Introduction to add the missing industrial context and improve the problem-gap-contribution logic. Modify the section directly in academic language; do not return an audit report.
+    expected_primary: 08-markdown-draft
+    expected_primary_surface: manuscript
+    must_change_product: true
+    audit_allowed: false
+    must_not_trigger: [07-experiment-audit, 11-reference-audit]
+    must_not_surface: [canonical evidence, claim promotion, evidence matrix, blocker]
+
+  - case_id: PRODUCT-ABSTRACT-FIREWALL-001
+    language: en
+    prompt: Rewrite the Abstract using the current verified scientific findings. Preserve the main findings and boundaries, but do not include corpus snapshot dates, record counts, coding states, promotion rules, repository paths, gates, ledgers, or review workflow.
+    expected_primary: 08-markdown-draft
+    expected_primary_surface: manuscript
+    must_change_product: true
+    audit_allowed: false
+    must_not_trigger: [10-language-polish, 11-reference-audit, peer-review]
+    must_not_surface: [coded snapshot, promotion rule, repository path, ledger, agent workflow]
+
+  - case_id: PRODUCT-COMPRESSION-001
+    language: zh
+    prompt: 将这一节压缩约三分之一。改写前先识别必须保留的 claim、定义、机制、假设、结果、工程例子、引用和边界；不得静默删除独特科学内容，并在修订后简要说明被合并、移动、弱化或删除的实质内容。
+    expected_primary: 08-markdown-draft
+    expected_primary_surface: manuscript
+    must_change_product: true
+    audit_allowed: false
+    must_not_trigger: [10-language-polish, peer-review, repository-self-evolution]
+    must_not_surface: [route packet, controller revision, validation matrix, prose score]
+
+  - case_id: PRODUCT-FIGURE-001
+    language: zh
+    prompt: 生成 Figure 2 的可编辑 SVG 和 PDF，并给出自包含 caption；不要只更新 figure manifest，也不要输出图表审计报告。
+    expected_primary: 15-figure-table-design
+    expected_primary_surface: figure
+    must_change_product: true
+    audit_allowed: false
+    must_not_trigger: [07-experiment-audit, 11-reference-audit]
+    must_not_surface: [manifest status, forbidden inference label, gate, blocker package]
+
+  - case_id: PRODUCT-EXPERIMENT-001
+    language: en
+    prompt: Run the approved matched baseline comparison, return the actual metrics and uncertainty, and save the result outputs. A run-ledger-only update is not completion.
+    expected_primary: 06-experiment-ops
+    expected_primary_surface: experiment
+    must_change_product: true
+    audit_allowed: false
+    must_not_trigger: [07-experiment-audit, code-module-xray]
+    must_not_surface: [terminal state report, artifact digest as the result, audit verdict, controller revision]
+
+  - case_id: PRODUCT-ARIS-EXECUTION-001
+    language: zh
+    prompt: 使用当前 PaperTrace execution profile 的 analyze-results 支持能力，分析已完成实验的数据。确认 estimand 和 independent unit，保存实际估计量、不确定性与 claim boundary。不要运行新实验、生成 Figure 或修改论文正文，也不要暴露 ARIS Skill 路径或 backend routing。
+    expected_primary: statistical-analysis
+    expected_primary_surface: experiment
+    must_change_product: true
+    audit_allowed: false
+    must_not_trigger: [06-experiment-ops, 07-experiment-audit, 15-figure-table-design, 08-markdown-draft]
+    must_not_surface: [ARIS skill selected, backend routing, assurance level, audit verdict, research-pipeline]
+
+  - case_id: PRODUCT-AUDIT-001
+    language: zh
+    prompt: 独立核验 RUN-0042 是否存在数据泄漏、baseline 不公平和统计功效不足；只给出具体科学问题和必要复跑，不修改实验代码。
+    expected_primary: 07-experiment-audit
+    expected_primary_surface: governance
+    must_change_product: false
+    audit_allowed: true
+    must_not_trigger: [06-experiment-ops, code-change]
+    must_not_surface: [controller migration, receipt chain, manifest drift, simulated reviewer count]
+
+  - case_id: PRODUCT-POLISH-001
+    language: zh
+    prompt: 把这段 Methods 英文润色得自然、专业、简洁。完整保留 claim、定义、机制、假设、工程例子、公式、数值、引用、术语和结论边界；只返回修订文本，不输出 grep、gate 或 readiness report。
+    expected_primary: 10-language-polish
+    expected_primary_surface: manuscript
+    must_change_product: true
+    audit_allowed: false
+    must_not_trigger: [11-reference-audit, 12-submission-pack]
+    must_not_surface: [evidence-stable gate, canonical source, audit result, route packet]
+
+  - case_id: PRODUCT-ANTI-DEFENSIVE-001
+    language: en
+    prompt: Revise this scientifically stable Discussion to remove repeated caveats, disclaimers, imagined-reviewer rebuttals, and stacked hedges. State necessary scope positively, retain the sample restriction, confidence interval, null result, citations, and evidence strength, and return the revised prose rather than a style audit.
+    expected_primary: 10-language-polish
+    expected_primary_surface: manuscript
+    must_change_product: true
+    audit_allowed: false
+    must_not_trigger: [05-claim-evidence, 08-markdown-draft, peer-review, 13-reviewer-response]
+    must_not_surface: [hedge count, banned-word score, caveat inventory, reviewer simulation, route packet]
+
+  - case_id: PRODUCT-EXTERNAL-001
+    language: en
+    prompt: Continue the approved experiment, but the required private dataset is not available in this environment. State the missing data action and stop; do not create blocker packages, receipts, handoff files, or reviewer simulations.
+    expected_primary: 06-experiment-ops
+    expected_primary_surface: experiment
+    must_change_product: false
+    audit_allowed: false
+    must_not_trigger: [07-experiment-audit, 14-agent-safety]
+    must_not_surface: [blocker package, receipt, handoff, reviewer simulation]
+
+  - case_id: PRODUCT-FIRST-USE-001
+    language: zh
+    prompt: 首次在这个没有项目指令文件的项目使用 PaperTrace，准备修复现有代码。已知目标和受保护路径在对话中；先只读检查，复用这些信息，只问真实缺口并展示具体 AGENTS.md 路径、内容草案和验收方式。等待我的明确确认，不先写文件或启动开发。
+    expected_primary: 00-router
+    expected_primary_surface: decision
+    must_change_product: false
+    audit_allowed: false
+    must_not_trigger: [code-change, 06-experiment-ops]
+    must_not_surface: [已自动初始化, 默认同意, 已开始训练]
+
+  - case_id: PRODUCT-FIRST-USE-EXISTING-001
+    language: zh
+    prompt: 首次接入已有项目，已有 agent.md 和作者维护规则。请只读了解实际约定与开发目标，展示对既有文件的最小 diff 供我确认，不创建 AGENTS.md 第二份，不覆盖原规则，也不把文件存在当作确认。
+    expected_primary: 00-router
+    expected_primary_surface: decision
+    must_change_product: false
+    audit_allowed: false
+    must_not_trigger: [code-change, repository-self-evolution]
+    must_not_surface: [已覆盖原规则, 已创建第二份指令文件]
+
+  - case_id: PRODUCT-FIRST-USE-TEMPLATE-001
+    language: zh
+    prompt: 刚克隆 PaperTrace 并安装完 Core，仓库自带 AGENTS.md。我想开始开发但尚未确认项目特定规则。先只读检查实际目标和代码，提出具体内容草案；安装成功和模板文件都不能替代我对草案的确认。
+    expected_primary: 00-router
+    expected_primary_surface: decision
+    must_change_product: false
+    audit_allowed: false
+    must_not_trigger: [code-change, 06-experiment-ops]
+    must_not_surface: [安装成功即已批准, 模板存在无需确认]
+
+  - case_id: PRODUCT-FIRST-USE-READONLY-001
+    language: zh
+    prompt: 我首次使用且没有 AGENTS.md，只读解释现有模型的输入输出和训练调用链。不要初始化文件，不要因为没有项目规则而拒绝只读帮助。
+    expected_primary: code-module-xray
+    expected_primary_surface: code
+    must_change_product: false
+    audit_allowed: false
+    must_not_trigger: [code-change, 06-experiment-ops]
+    must_not_surface: [必须先生成 AGENTS.md, 已初始化]
+
+  - case_id: PRODUCT-FIRST-USE-DECLINED-001
+    language: zh
+    prompt: 我拒绝刚才展示的 AGENTS.md 写入提案，也取消依赖它的开发。不要写入目标、草稿、备份或其他初始化文件，也不要反复问；本轮只说明哪些工作暂停。
+    expected_primary: 00-router
+    expected_primary_surface: decision
+    must_change_product: false
+    audit_allowed: false
+    must_not_trigger: [code-change, 06-experiment-ops]
+    must_not_surface: [已写入草稿, 已生成备份, 默认同意]
+
+  - case_id: PRODUCT-FIRST-USE-NONINTERACTIVE-001
+    language: en
+    prompt: This is a non-interactive first-use session with no approved project instruction proposal. Inspect what is available and report the missing decision. Do not generate or update project instructions, initialize other artifacts, or interpret --non-interactive as consent.
+    expected_primary: 00-router
+    expected_primary_surface: decision
+    must_change_product: false
+    audit_allowed: false
+    must_not_trigger: [code-change, 06-experiment-ops]
+    must_not_surface: [implicitly approved, automatically initialized]
+
+  - case_id: PRODUCT-FIRST-USE-REPEAT-001
+    language: en
+    prompt: We already explicitly approved and applied the displayed AGENTS.md proposal for this same project and scope. Nothing changed. Inspect the existing contract and reuse it without writing another file, approval log, or completion flag and without repeating the interview; report that no instruction change is needed.
+    expected_primary: 00-router
+    expected_primary_surface: decision
+    must_change_product: false
+    audit_allowed: false
+    must_not_trigger: [repository-self-evolution, code-change]
+    must_not_surface: [new approval registry, repeat the full interview]
+
+  - case_id: PRODUCT-FIRST-USE-PYTORCH-001
+    language: zh
+    prompt: 首次接入我的 PyTorch 项目。先只读查看现有 Lightning 模型、数据模块、训练与评估入口，复用已说明目标、split 和 checkpoint 约束，提出最小开发思路及 AGENTS 差异供我确认。只问影响方案的真实缺口；软件测试与真实实验验收分开。我尚未批准安装依赖、训练或新增架构。
+    expected_primary: 00-router
+    expected_primary_surface: decision
+    must_change_product: false
+    audit_allowed: false
+    must_not_trigger: [code-change, 06-experiment-ops]
+    must_not_surface: [已安装 PyTorch, 已启动训练, 已重写框架]
+
+  - case_id: PRODUCT-FIRST-USE-NONCODE-001
+    language: zh
+    prompt: 首次接入纯论文项目，没有代码或训练任务。只读查看已有正文、引用和约定，复用已说明范围，提出适合本项目的 AGENTS 内容供我确认；不要强加 PyTorch、tensor、训练模块或固定问卷。
+    expected_primary: 00-router
+    expected_primary_surface: decision
+    must_change_product: false
+    audit_allowed: false
+    must_not_trigger: [code-change, 06-experiment-ops, pytorch-lightning]
+    must_not_surface: [必须安装 PyTorch, 必须建立训练模块]
+
+  - case_id: PRODUCT-FIRST-USE-CONFIRMED-001
+    language: zh
+    prompt: 我明确确认你刚才展示的本项目 AGENTS.md 路径与完整最小 diff，包括目标、范围、开发思路及验证。请先重读目标，确认没有冲突后仅应用已确认差异并检查结果；不再次提问，不启动训练或改其他产物。
+    expected_primary: 00-router
+    expected_primary_surface: governance
+    must_change_product: true
+    audit_allowed: false
+    must_not_trigger: [06-experiment-ops, repository-self-evolution]
+    must_not_surface: [再次确认相同提案, 已启动训练]
+
+  - case_id: PRODUCT-FIRST-USE-DIRECT-001
+    language: zh
+    prompt: 第一次在这个项目使用 PaperTrace，项目工作约定尚未讨论。直接使用 code-change 修复现有模型 forward 的 tensor-shape 错误，并运行相关单元测试。
+    expected_primary: 00-router
+    expected_primary_surface: decision
+    must_change_product: false
+    audit_allowed: false
+    must_not_trigger: [code-change, 06-experiment-ops]
+    must_not_surface: [已修改 forward, 已自动初始化]
+
+  - case_id: PRODUCT-FIRST-USE-MANUSCRIPT-001
+    language: zh
+    prompt: 第一次在这个纯论文项目使用 PaperTrace，还没有项目特定的工作约定。请把现有 Introduction 改得更清晰，保留引用和已核实的结论。
+    expected_primary: 00-router
+    expected_primary_surface: decision
+    must_change_product: false
+    audit_allowed: false
+    must_not_trigger: [08-markdown-draft, 10-language-polish, code-change]
+    must_not_surface: [已重写 Introduction, 已自动初始化, 必须安装 PyTorch]
+
+  - case_id: PRODUCT-CONTINUE-CODE-001
+    language: zh
+    prompt: 本项目 AGENTS 与这次模型修复已明确批准，范围没有变化。根据实际调用修复 src/model.py 的张量维度错误，在 tests/test_model.py 加入针对性回归并实际运行；不重写 AGENTS、不启动完整训练，不再要求同一批准。
+    expected_primary: code-change
+    expected_primary_surface: code
+    must_change_product: true
+    audit_allowed: false
+    must_not_trigger: [grill-me, repository-self-evolution]
+    artifact_paths: [src/model.py, tests/test_model.py]
+    protected_paths: [AGENTS.md]
+
+  - case_id: PRODUCT-CONFIRM-THEN-CONTINUE-001
+    language: zh
+    prompt: 我确认刚才展示的 AGENTS.md 最小差异，也明确授权继续原任务：修复 src/model.py 的 forward 错误并在 tests/test_model.py 添加与执行回归。重读无冲突后应用这三处必要修改；不要只完成初始化就结束，不启动训练。
+    expected_primary: code-change
+    expected_primary_surface: code
+    must_change_product: true
+    audit_allowed: false
+    must_not_trigger: [grill-me, 06-experiment-ops]
+    artifact_paths: [AGENTS.md, src/model.py, tests/test_model.py]
+
+  - case_id: PRODUCT-CONTINUE-RUN-001
+    language: zh
+    prompt: 本项目约定、protocol.yaml、现有数据、比较配置和本轮 CPU 预算已经明确批准且仍有余量。按批准协议在指定源域拟合正常阈值并执行比较，保存真实 results/comparison.json；不得用最终测试反馈选择阈值、只更新日志或再次申请相同授权。无足够独立重复时明确不确定性尚不足。
+    expected_primary: 06-experiment-ops
+    expected_primary_surface: experiment
+    must_change_product: true
+    audit_allowed: false
+    must_not_trigger: [grill-me, 07-experiment-audit]
+    artifact_paths: [results/comparison.json]
+    protected_paths: [protocol.yaml]
+
+  - case_id: PRODUCT-PARTIAL-BLOCK-001
+    language: zh
+    prompt: 项目与任务已批准。远程训练因本环境没有私有数据而受阻；本地 src/metrics.py 的类别顺序错误可用现有结果独立复现。修复该代码并运行最近测试，保留 config/split.yaml，不启动或声称完成远程训练，也不要把全部工作标为不可执行。
+    expected_primary: code-change
+    expected_primary_surface: code
+    must_change_product: true
+    audit_allowed: false
+    must_not_trigger: [grill-me, 06-experiment-ops]
+    artifact_paths: [src/metrics.py]
+    protected_paths: [config/split.yaml]
+
+  - case_id: PRODUCT-RESULTS-TO-TEXT-001
+    language: zh
+    prompt: 项目约定和正文修改已批准。根据给定 results/source.json 的真实结果改写 paper/draft/results.md，保留负结果、独立样本单位和未验证机制，不改原始结果、不新增实验，不以状态摘要或全篇审查替代正文。
+    expected_primary: 08-markdown-draft
+    expected_primary_surface: manuscript
+    must_change_product: true
+    audit_allowed: false
+    must_not_trigger: [07-experiment-audit, peer-review, 06-experiment-ops]
+    artifact_paths: [paper/draft/results.md]
+    protected_paths: [results/source.json]
+
+  - case_id: PRODUCT-PROTOCOL-STOP-001
+    language: zh
+    prompt: 项目约定已批准，但 protocol.yaml 指定的源域校准输入确实缺失。不要用最终测试标签代替校准、改写协议或生成 results/comparison.json；准确说明受影响的运行和缺失输入，本轮没有其他独立执行任务。
+    expected_primary: 06-experiment-ops
+    expected_primary_surface: experiment
+    must_change_product: false
+    audit_allowed: false
+    must_not_trigger: [code-change, repository-self-evolution]
+    artifact_paths: [results/comparison.json]
+    protected_paths: [protocol.yaml]
+
+  - case_id: PRODUCT-CORE-PROPOSAL-001
+    language: zh
+    prompt: 需要调整 paper/core/02_RESEARCH.md 的候选 research gap；我尚未确认修改。核验相关原文后展示具体理由和最小 diff，不写入 core、草稿或备份，不把提议变成已批准方向。
+    expected_primary: 02-research-question
+    expected_primary_surface: decision
+    must_change_product: false
+    audit_allowed: false
+    must_not_trigger: [06-experiment-ops, repository-self-evolution]
+    artifact_paths: [paper/core/02_RESEARCH.md]
+
+  - case_id: PRODUCT-CORE-CONFIRMED-001
+    language: zh
+    prompt: 我确认你刚才展示的 paper/core/02_RESEARCH.md 最小 diff，内容及范围未变。重读无冲突后仅应用已确认差异并检查；不重问、不自动批准训练或修改其他科学文件。
+    expected_primary: 01-project-brief
+    expected_primary_surface: governance
+    must_change_product: true
+    audit_allowed: false
+    must_not_trigger: [06-experiment-ops, grill-me]
+    artifact_paths: [paper/core/02_RESEARCH.md]
+
+  - case_id: PRODUCT-CORE-PENDING-CONTINUE-001
+    language: zh
+    prompt: 项目已对齐，实际实验结果已提供，Results 正文修订已授权。07_PROGRESS 的拟议摘要尚未确认，保持它不变；先完成 paper/draft/results.md 的真实结果解释，保留负结果和不确定性，不因进展页待确认而停下。
+    expected_primary: 08-markdown-draft
+    expected_primary_surface: manuscript
+    must_change_product: true
+    audit_allowed: false
+    must_not_trigger: [grill-me, 06-experiment-ops]
+    artifact_paths: [paper/draft/results.md]
+    protected_paths: [paper/core/07_PROGRESS.md]

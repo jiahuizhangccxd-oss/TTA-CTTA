@@ -1,0 +1,578 @@
+# PaperTrace 新论文仓库：AGENTS.md 最优设计方案
+
+建议采用“一个简洁的 `AGENTS.md` + 一个科学问题权威文件 + 一个论文类型专属协议 + 一个进展视图”的结构。
+
+不要把所有 research gap、实验配置、文献协议、开发规范和任务清单全部塞进 `AGENTS.md`。那会使 Agent 每次执行任务都重新理解整个项目，甚至把“需要检查的内容”误解为“必须完成的前置审批”。
+
+更有效的设计是：
+
+- `AGENTS.md`：规定 Agent 如何行动、什么时候停止、什么情况才需要确认。
+- `paper/paper.yaml`：定义论文研究什么、真正的 research gap、当前最大不确定性和下一项决定性工作。
+- 类型专属协议：小论文定义任务、数据、split、baseline、loss、metric 和预算；综述定义研究范围、检索、纳入排除、taxonomy 和综合方法。
+- `paper/STATUS.md`：仅展示实际进展、当前阻塞和下一步，不创建第二套科研事实或任务管理系统。
+
+我核对了 PaperTrace 当前 `dev@daf4012`（PR #50 已合入）的实际文件。它已经具备 `paper/paper.yaml`、`paper/method/method_spec.yaml`、`paper/refs/reading_matrix.md` 和 `paper/STATUS.md`，因此应优先复用这些现有文件，而不是建立新的 `GOALS.md`、`GAPS.md`、`PLANS.md`、`TASKS.md` 和重复的审批文件。
+
+这也符合 OpenAI 2026 年 9 月的官方建议：`AGENTS.md` 应保持短小，按当前任务加载相关文档，而不是每次修改都要求读取大量无关材料。
+
+[image](https://www.google.com/s2/favicons?domain=https://developers.openai.com\&sz=32)
+
+OpenAI Developers
+
+
+
+## 一、先确定文件边界：什么信息放哪里
+
+AGENTS.md
+
+唯一执行契约 · 项目类型 · 授权边界 · 文件导航 · 完成标准
+
+paper/paper.yaml
+
+Research Question · Gap · Claims · Uncertainty · Next Action
+
+小论文 / 方法论文
+
+Method Specification
+
+Experimental Protocol
+
+Configurations
+
+Actual Results
+
+综述论文
+
+Review Scope & Protocol
+
+Verified Literature
+
+Taxonomy & Synthesis
+
+Manuscript
+
+paper/STATUS.md
+
+已完成什么 · 尚缺什么 · 下一项可验证产物
+
+具体文件职责如下：
+
+| 文件                              | 唯一职责                               | 修改时机             |
+| ------------------------------- | ---------------------------------- | ---------------- |
+| `AGENTS.md`                     | 长期稳定的项目执行约定                        | 首次作者确认；开发原则实质变化时 |
+| `paper/paper.yaml`              | 科学问题、gap、核心主张、当前研究判断               | 新证据或作者决定改变研究判断时  |
+| `paper/method/method_spec.yaml` | 方法机制、数学对象、可证伪预测                    | 方法研究需要时          |
+| `paper/experiments/protocol.md` | 实验 setting、信息权限、split、baseline、公平性 | 开展实验前，协议变更时      |
+| `configs/` 或现有配置目录              | 具体训练参数与可执行配置                       | 实验实现及受控调整时       |
+| `paper/refs/review_protocol.md` | 综述类型、检索范围、纳入标准、综合规则                | 正式组织综述语料时        |
+| `paper/refs/reading_matrix.md`  | 已核验论文的具体发现和局限                      | 阅读、核验原始文献时       |
+| `paper/STATUS.md`               | 基于真实产物的可读进展与任务 gap                 | 完成关键工作或研究判断改变时   |
+
+`protocol.md` 是建议按需新增的文件名。如果新仓库已经有可信的实验协议文件，或者已有综述纳入协议，直接沿用原文件，不建立重复版本。
+
+这里还有一个容易忽视的关键点：不要让 `AGENTS.md` 成为科学假设的权威。 科学假设会因负结果而修订，执行规则却应保持相对稳定。二者混在一起，就会使每次科学探索都像在申请修改仓库宪法。
+
+## 二、最重要的科学改进：区分 Research Gap、Task Gap 和 Blocker
+
+这三个概念不应该混写。
+
+| 类型              | 核心问题                    | 应记录在哪里                                  | Agent 应做什么    |
+| --------------- | ----------------------- | --------------------------------------- | ------------- |
+| Research Gap    | 现有工作在明确条件下尚未解决什么科学问题？   | `paper/paper.yaml` + 近邻文献               | 核验近邻、提出区别性预测  |
+| Evidence Gap    | 当前论文主张缺少什么实验证据、证明或文献支持？ | `paper/paper.yaml` + 现有 evidence matrix | 完成最小决定性验证     |
+| Engineering Gap | 哪段实现阻止正确计算或实验？          | 源码、测试与当前任务                              | 修复根因并直接验证     |
+| Access Blocker  | 哪项必要资源或权限实际上不可用？        | `paper/STATUS.md` 的当前进展                 | 暂停相关动作，继续独立工作 |
+| Writing Gap     | 哪个论证、章节或图表尚未表达科学结论？     | 唯一正文和图源                                 | 直接修改相关产物      |
+
+Research Gap 是论文需要回答的问题；Task Gap 是当前阻止回答该问题的缺口。
+
+尤其要禁止一种常见的错误推理：
+
+> 尚未完成真实实验 → 创新性不足 → 需要重新设计方法 → 增加更多模块 → 需要更多实验 → 再次陷入阻塞。
+
+正确逻辑应该是：
+
+\\[ \text{当前主张} \rightarrow \text{缺少的决定性证据} \rightarrow \text{最小可行行动} \rightarrow \text{真实结果} \rightarrow \text{保留、修订或拒绝主张} \\]
+
+对于综述，类似地：
+
+\\[ \text{综述问题} \rightarrow \text{已有综述覆盖边界} \rightarrow \text{原始文献比较} \rightarrow \text{新的综合认识} \rightarrow \text{有依据的贡献} \\]
+
+如果最新文献证明所谓 gap 已由前人解决，Agent 应修订研究定位，而不是继续为原创新叙事寻找支持。
+
+## 三、推荐的项目级 AGENTS.md 模板
+
+下面这份是针对新建 PaperTrace 论文仓库的项目专属部分。首次使用时，应先由 Agent 查看实际项目，展示对应的最小 diff，经过作者确认后再写入。
+
+它不是要求覆盖 PaperTrace 原有 `AGENTS.md`，而是补充真实项目的执行契约，并通过引用复用 PaperTrace 的通用规则。
+
+# Project AGENTS.md — Research-First Execution Contract
+
+## 1. Project identity and authority
+
+本仓库服务于一篇真实科研论文。
+
+- **Paper type:** `[empirical / theoretical / technical-narrative survey / systematic review / scoping review]`
+- **Research authority:** `paper/paper.yaml`
+- **Manuscript authority:** `paper/paper.yaml` 指定的 `active_source`
+- **Project protocol:** `[实际存在的实验或综述协议路径；未建立时为 not established]`
+- **Code and configuration entry:** `[实际入口；纯综述可不适用]`
+- **Integration branch:** `[核实后的目标分支]`
+- **Protected assets:** `[真实数据、最终测试、已有结果、作者原稿等实际受保护路径]`
+
+PaperTrace 提供通用科研 Skills 与执行规则；本项目定义具体科学问题、研究设定、输入数据、方法、可修改范围和评价协议。
+
+不得复制建立第二套科学状态、执行 Router、审批系统或日志权威。
+
+## 2. Scientific objective
+
+以 `paper/paper.yaml` 的当前研究问题和作者决定为准。
+
+每项科研工作必须服务于以下至少一个目标：
+
+1. 识别或验证真实 Research Gap；
+2. 区分科学假设与最强竞争解释；
+3. 完成合法且有判别力的实验、分析或理论证明；
+4. 从已核验的原始文献形成新的综合认识；
+5. 将真实科学结果准确转化为论文主张、图表或正文。
+
+代码维护、单元测试、文档规范和 PR 合并是支撑工作，不自动构成科学贡献。
+
+不得因当前证据不足而编造 gap、failure、novelty、实验结果或引用。
+
+## 3. Task-specific reading
+
+按任务读取最小必要材料，不每次扫描所有 Skills、Prompt、日志和论文文件。
+
+- 科学问题、方向或创新性：读取 `paper/paper.yaml` 和相关近邻文献。
+- 方法设计与实现：读取现有方法规格、相关源码和配置。
+- 实验：读取已确定的实验协议、实际数据入口、配置和现有结果。
+- 综述检索与综合：读取实际 review protocol、reading matrix 和目标正文。
+- 论文写作：读取唯一正文、相关证据及 PaperTrace 的 Paper Skill Core。
+- 项目进度：读取 `paper/paper.yaml`、实际产物和 `paper/STATUS.md`。
+
+所需文件尚不存在时，只在本次任务确实需要时创建；缺少可选文件不构成阻塞。
+
+## 4. Execution autonomy
+
+在已确认的项目范围内：
+
+- 明确、可逆的局部修复、数据分析、已授权运行和正文修改直接执行。
+- 复杂任务先用简短 Handoff 明确 Goal、Root Cause、Scope、Plan、Acceptance、Rollback，再执行已授权部分。
+- 首次项目约定须经过作者确认；相同约定和授权范围内不重复确认。
+- 只有改变研究方向、科学协议、未授权计算预算、敏感数据边界或不可逆操作时，才请求相应决定。
+- 一项独立操作受阻，不代表其他已授权、独立可行的工作也必须停止。
+
+不得将“先规划后执行”解释为“只规划”。
+
+## 5. Scientific settings
+
+所有科学设定均由当前项目的协议及配置定义，而不是由 Agent 临时假设。
+
+对经验研究，确认任务、观测、预测目标、独立单位、数据访问、split、preprocessing、baseline、loss、metric、计算预算和结果判定。
+
+对综述，确认 review type、研究问题、语料范围、原文获取、纳入标准、近邻综述、taxonomy 维度和综合方法。
+
+纯理论论文只应用适合证明、假设、命题和反例的规则，不强制创建实验或综述流程。
+
+不同 setting 的差异优先通过已有配置表达，不复制训练入口，不静默切换科学协议。
+
+## 6. Minimal implementation and validation
+
+坚持第一性原理与奥卡姆剃刀。
+
+- 优先复用已有模块、函数、算法和实验入口。
+- 不因假设性风险添加多层 fallback、wrapper、controller 或通用基础设施。
+- 允许协议明确规定的鲁棒降级；禁止在失败后静默替换数据、模型、标签、checkpoint 或任务。
+- 对代码修改验证相关接口和数值语义；对实验核验真实输出和公平性；对论文核对原文、数值与逻辑。
+- 不将软件测试、实验有效性和科学有效性相互替代。
+- 不重复运行没有新增信息的检查。
+
+## 7. Scientific gap and task priority
+
+当前 Research Gap、主张风险和最大不确定性以 `paper/paper.yaml` 为准。
+
+优先选择能够改变科学判断的最小工作，而不是最容易通过测试或最容易生成文档的工作。
+
+执行优先级：
+
+1. 会使科学结论失效的真实错误；
+2. 阻止关键实验、证明或文献综合的缺口；
+3. 能直接改变核心主张的工作；
+4. 必要的正文、图表和可复现性改进；
+5. 与当前结论无关的工程整理。
+
+具体待办由 `paper/STATUS.md` 摘要展示，不另建任务注册系统。
+
+## 8. Stop, review and fallback policy
+
+停止当前操作的合理条件包括：
+
+- 关键科学定义或必要输入缺失；
+- 需要尚未取得的权限；
+- 已达到既定预算或停止规则；
+- 真实结果足以支持、拒绝或缩小待检验假设；
+- 重复执行已不再产生影响判断的新信息。
+
+必须保留有效的负结果与反例。
+
+默认不启动多轮独立审稿、反复重规划、递归 Skill 调用或自动生成新任务链。
+
+一次针对性复核足够时，不扩展为全仓库科学审计。
+
+## 9. Artifact-driven completion
+
+每项任务均应识别唯一主要产物：
+
+- Engineering：实际代码、配置或接口修改，以及相应测试。
+- Experiment：真实实验文件、比较指标、不确定性和协议核验。
+- Literature：核验过的原文、比较结论或引用修订。
+- Science：获得支持、反证或明确边界的科学判断。
+- Manuscript：正文、可编辑图表或正式稿件修改。
+
+最终报告采用：
+
+**Solved**：实际完成的主要产物。
+
+**Verified**：已执行的检查及真实结果。
+
+**Research Impact**：改变了什么科学判断。
+
+**Remaining**：尚缺的必要证据或行动。
+
+不要以测试数量、计划数量、代码行数、PR 数量或审查轮次冒充论文进展。
+
+## 10. Git and protected work
+
+尊重当前项目已经确认的 Git 约定和受保护路径。
+
+保留用户未提交修改、原始数据、模型权重、历史结果与论文原稿。
+
+在允许范围内完成提交与集成；不绕过失败的验证、不强制推送、不擅自删除或覆盖有效资产。
+
+项目中已有合理约定时沿用，不重复创建规则或要求第二次授权。
+
+这个模板中最重要的不是某一个“大胆执行”的口号，而是明确了信息权威、任务产物和停止条件。
+
+OpenAI 的 Codex 官方说明也指出，`AGENTS.md` 会从全局到项目及下级目录分层加载，因此应尽可能使规则具有明确作用范围；针对整个仓库的规定放在根目录，真正只适用于某个子系统的约束才放在更深层。
+
+[image](https://www.google.com/s2/favicons?domain=https://developers.openai.com\&sz=32)
+
+developers.openai.com
+
++1
+
+
+
+## 四、小论文需要定义哪些 Setting？
+
+实验型论文应把 setting 写成可验证的科学协议，而不是无限增长的实验清单。
+
+建议在 `paper/experiments/protocol.md` 中定义以下信息，并引用实际配置文件。
+
+| Setting 维度       | 必须明确的问题      | 典型取值或描述                                                                 |
+| ---------------- | ------------ | ----------------------------------------------------------------------- |
+| Problem          | 究竟预测什么？      | Fault classification、RUL、anomaly detection                              |
+| Object           | 研究对象是什么？     | Bearing、gearbox、robot、battery                                           |
+| Observation      | 模型允许看到什么？    | Vibration、current、multivariate time series                              |
+| Domain           | 什么变化构成一个域？   | Speed、load、machine、site、time                                            |
+| Task regime      | 使用何种学习范式？    | Supervised、DG、DA、TTA、continual                                          |
+| Independent unit | 统计独立单位是什么？   | Machine、run、physical acquisition                                        |
+| Split            | 哪些对象必须互斥？    | Train / validation / test                                               |
+| Target access    | 可以访问目标域什么信息？ | No access、unlabeled、few labeled                                         |
+| Preprocessing    | 什么统计量在何处拟合？  | Training-only normalization、resampling                                  |
+| Method           | 改变哪个模型机制？    | Representation、constraint、loss、decision                                 |
+| Baselines        | 与什么强参照比较？    | Closest method、simple matched baseline                                  |
+| Loss             | 优化目标是什么？     | \\(\mathcal L\_{\rm cls},\mathcal L\_{\rm reg},\mathcal L\_{\rm aux}\\) |
+| Metrics          | 评价什么性质？      | Macro-F1、MAE、AUROC、latency                                              |
+| Tuning           | 允许用哪些数据调参？   | Source validation、calibration                                           |
+| Budget           | 允许多少计算与重复？   | GPU-hours、seeds、search trials                                           |
+| Claim test       | 什么结果支持或拒绝主张？ | Effect size、机制指标、边界测试                                                   |
+
+这里需要强调：setting 不是完整实验列表，而是决定结果能否比较和解释的科学条件。
+
+例如，DG 与 TTA 可以共享大部分代码，但两者允许使用的目标域信息不同。若不把信息使用权限写清楚，Agent 很容易为了“模型效果更好”引入目标测试反馈，从而破坏原论文的 DG 定义。
+
+### 推荐使用信息权限矩阵
+
+下面是示意协议，不是对新仓库的默认授权。
+
+| Setting    | 训练数据                | 模型选择          | 目标域信息            | 测试阶段更新     |
+| ---------- | ------------------- | ------------- | ---------------- | ---------- |
+| Supervised | 标注训练集               | 验证集           | 标准 held-out 测试   | 无          |
+| DG         | 多源标注数据              | 源域验证          | 训练和选择阶段不可使用未见目标域 | 无          |
+| UDA        | 标注源域 + 协议允许的无标签目标数据 | 按 DA 协议确定     | 无标签目标域可参与适应      | 由协议定义      |
+| TTA        | 预训练模型               | 冻结的开发规则       | 测试输入按协议可见        | 允许规定的测试时更新 |
+| Continual  | 顺序到达的数据             | 预定义 online 规则 | 仅使用当前时刻允许的信息     | 按时间顺序更新    |
+
+对于具体方法论文，还应在实际协议里写出数据使用范围：
+
+\\[ \mathcal U\_{\mathrm{train}}\cap\mathcal U\_{\mathrm{test}}=\varnothing \\]
+
+这里的 \\(\mathcal U\\) 是真实独立物理单位，而不是随机切出的窗口。是否还需要 train–validation 物理单位互斥，要由研究问题和验证协议明确规定，不能不加区别地强制应用。
+
+已有 `paper/method/method_spec.yaml` 应继续承担方法机制定义，不需要把数学机制再复制到 `AGENTS.md`。只有当 setting 足以确定模型信息访问、评价目标与资源边界后，才启动其对应的有效比较。
+
+NeurIPS 的官方论文检查要求也强调实验的划分、超参数及其选择方式、可复现命令、统计不确定性和计算资源说明；这些应该有原始配置与结果对应，而不是仅在报告中声称“已严格遵守”。
+
+[image](https://www.google.com/s2/favicons?domain=https://neurips.cc\&sz=32)
+
+neurips.cc
+
+
+
+## 五、综述论文需要定义哪些 Setting？
+
+综述不应套用方法论文的训练、loss、split、ablation 和 GPU 验收逻辑。
+
+尤其需要先决定综述类型：
+
+Technical / Narrative Survey
+
+以科学问题、机制比较、方法假设、taxonomy 与综合认识为中心。要求检索透明、原文可核验，但不自动套用系统综述的全部流程。
+
+Systematic / Scoping Review
+
+强调预定义检索与筛选方法、纳入排除、一致性和完整报告。Systematic 可参照 PRISMA 2020，Scoping 对应 PRISMA-ScR。
+
+PRISMA 2020 与 PRISMA-ScR 是针对相应综述类型的报告指南，不应强加给所有技术综述。
+
+[image](https://www.google.com/s2/favicons?domain=https://www.prisma-statement.org\&sz=32)
+
+PRISMA statement
+
++1
+
+推荐的 `paper/refs/review_protocol.md` 应包含以下科学维度：
+
+| 维度                    | 必须定义的问题                  |
+| --------------------- | ------------------------ |
+| Review Questions      | 这篇综述真正回答什么问题？            |
+| Closest Surveys       | 最近邻综述已经回答了什么？            |
+| Review Gap            | 缺失的是否是新的综合认识，而不只是“文章更少”？ |
+| Corpus Scope          | 领域、对象、时间、任务和方法边界是什么？     |
+| Search Protocol       | 从何处、用什么检索式、在何日期取得文献？     |
+| Inclusion / Exclusion | 哪些论文能进入语料，为什么？           |
+| Taxonomy Dimensions   | 基于什么机制和科学问题划分方法？         |
+| Comparison Axes       | 比较假设、能力、适用条件还是结果？        |
+| Source Verification   | 结论是否能追溯到原文段落、表格或 Figure？ |
+| Contradictions        | 如何处理论文之间不一致的发现？          |
+| Synthesis Claim       | 综合以后得到什么此前尚未充分明确的认识？     |
+| Stop Condition        | 何种证据覆盖足以回答当前问题？          |
+
+对于你的 PHM、Foundation Model、Agent 等技术综述，taxonomy 不应只是给现有模型重新分类，而应提供一种能够解释差异、矛盾或失效边界的比较视角。
+
+例如，以下只是一个待原文核验的研究假设，而不是已经成立的文献结论：
+
+> 现有 PHM Foundation Model 综述可能更强调 backbone 或预训练目标，而没有充分统一不同研究的条件异质性、先验利用和部署时适应权限。一个以这些维度组织的框架，可能揭示目前性能比较为何不可直接等价。
+
+Agent 接下来应核验最接近的综述是否已经提出同样框架。如果已有工作完成了这一综合，就不能只因为改变了类别名称而称其为创新。
+
+另一个重要规则是：如果作者只要求一个技术性 narrative survey，就不要默认开展 PRISMA 流程、双人筛选、复杂编码一致性和强制 meta-analysis。 这些应由真正选择的综述方法和研究问题决定。对非系统性综述，SANRA 可提供检索透明度、引用质量和论证质量的参考，但它最初是为医学叙述性综述开发的，不能直接视为 AI 领域通用的强制标准。
+
+[image](https://www.google.com/s2/favicons?domain=https://doi.org\&sz=32)
+
+Springer Nature Link
+
+
+
+## 六、Research Gap 如何在 paper.yaml 中定义？
+
+当前 PaperTrace 已经提供了相关字段，因此无需另建 `GAP.md`。
+
+建议保持下面的映射：
+
+| 原有字段                                             | 应记录什么            |
+| ------------------------------------------------ | ---------------- |
+| `problem_definition.failure_or_contradiction`    | 实际观察到的失败或未解决矛盾   |
+| `research_state.central_question`                | 一句话可研究的问题        |
+| `research_state.current_claim_at_risk`           | 目前最有风险的主张        |
+| `research_state.strongest_support`               | 当前可核验的最强支持       |
+| `research_state.strongest_competing_explanation` | 最强替代解释           |
+| `research_state.current_novelty_risk`            | 最接近的工作可能使什么贡献不成立 |
+| `research_state.largest_unresolved_uncertainty`  | 当前最大证据缺口         |
+| `research_state.most_informative_next_action`    | 下一项能够改变判断的行动     |
+| `research_state.possible_outcomes_and_decisions` | 正向、反向、无效结果分别如何处理 |
+| `research_state.stopping_condition`              | 何时停止当前研究循环       |
+
+一个足够明确的 Gap 至少包含：
+
+\\[ G=(P, W, L, Q, D) \\]
+
+其中 \\(P\\) 是明确的研究问题，\\(W\\) 是经过核验的最近邻工作，\\(L\\) 是其特定边界，\\(Q\\) 是尚未解决的问题，\\(D\\) 是能够区分新旧解释的观察或实验。
+
+如果缺少 \\(W\\) 与 \\(L\\)，则只能称为候选 gap，不能称为经过验证的创新缺口。
+
+### 例子：小论文的 research_state
+
+下面是一个缩写后的示例，不是对某个实际论文的创新性判断：
+
+```
+research_state:
+  central_question: >-
+    Can the proposed representation improve
+    fault diagnosis under unseen speed/load shifts?
+
+  current_claim_at_risk: >-
+    The gain comes from the representation mechanism,
+    rather than extra capacity or tuning.
+
+  strongest_support: unknown
+
+  favored_explanation: >-
+    The representation suppresses condition-specific
+    nuisance information.
+
+  strongest_competing_explanation: >-
+    Similar gains arise from model capacity
+    or stronger normalization.
+
+  largest_unresolved_uncertainty: >-
+    No matched capacity/normalization comparison.
+
+  current_novelty_risk: >-
+    The closest prior method may already
+    implement the same mechanism; unverified.
+
+  most_informative_next_action: >-
+    Run one matched comparison on a valid
+    held-out condition.
+
+  possible_outcomes_and_decisions: >-
+    Positive: investigate the mechanism.
+    Null: narrow the claim.
+    Negative: reject the current explanation.
+
+  stopping_condition: >-
+    Stop this comparison after the planned valid
+    runs or the approved budget is exhausted.
+```
+
+这个定义使 Agent 知道自己为什么运行某项实验，以及实验可能如何否定论文主张。
+
+对综述，只需把 `favored_explanation` 理解为待检验的综合框架，把 `strongest_competing_explanation` 理解为已有综述或更简单分类能够提供的竞争性解释。不能为了符合方法论文模板而虚构因果机制。
+
+## 七、如何避免“疯狂执行流程”和“疯狂兜底防御”？
+
+我建议在项目层明确五种典型任务的直接完成标准，而不是用一个通用的“确保全部完成”要求约束所有操作。
+
+| 用户实际请求          | Agent 应直接完成    | 不应自动扩展为              |
+| --------------- | -------------- | -------------------- |
+| 修复一个 Python Bug | 修改源码、针对性验证     | 全仓重构、完整训练            |
+| 实现新模型机制         | 最小实现、匹配测试、必要对照 | 新 backbone、额外模块、无限消融 |
+| 执行实验            | 已批准队列中的真实运行及结果 | 一旦失败就新建一套 Runner     |
+| 阅读并获取文献         | 真实检索、原文归档、科学比较 | 只写检索计划或虚报下载数量        |
+| 优化论文章节          | 修改唯一正文和实际图表    | 自动启动多轮审稿与整个投稿流程      |
+
+其中“缺资料”也应按实际范围处理。比如用户要求下载 50 篇文献，若某篇无法合法获取全文，应记录该篇未取得，继续获取其他可访问的原文；不能因为单篇访问失败就停止整个检索，也不能把摘要当成已下载 PDF。
+
+反过来，如果一项方法比较缺少合法测试标签或关键独立物理单位信息，就不能为了产出一个准确率而替换协议。
+
+可以把 Agent 的行为约束总结为三个独立原则：
+
+执行原则： 已确认且具备条件的任务应落实到实际产物。
+
+科学原则： 不改变未授权的研究定义，不制造支持论文的结果。
+
+停止原则： 当下一次操作无法提供影响当前判断的新信息时，不再重复相同流程。
+
+OpenAI 关于 Agent Skill 评价的指导也建议同时评估结果、过程和空转开销，而不只评估是否成功调用了 Skill。
+
+[image](https://www.google.com/s2/favicons?domain=https://developers.openai.com\&sz=32)
+
+OpenAI Developers
+
+
+
+## 八、新论文仓库首次使用时，怎样与用户确认？
+
+你之前明确要求首次初始化必须和作者充分对齐。这个要求应该保留，但只进行一次具有实际内容的项目对齐。
+
+推荐直接向新仓库 Codex 提交下面的任务：
+
+# PaperTrace｜新论文项目初始化与科研契约确认
+
+这是一个基于 PaperTrace 的新论文仓库，可能是方法论文、理论论文或综述。
+
+本轮先只读检查真实仓库，包括 README、现有 AGENTS、paper.yaml、代码、配置、已有正文、文献及可核验研究记录。
+
+请根据实际材料完成：
+
+**一、确定论文类型及科学问题**
+
+识别研究对象、环境、观测、任务、核心问题、已有成果、最近邻和待核验的 Research Gap。区分已证实事实、合理假设和未知项。
+
+**二、明确唯一科研权威**
+
+复用 `paper/paper.yaml`、当前唯一正文和现有状态文件。不得额外建立 GAP、PLAN、STATUS、TASK、APPROVAL 等平行系统。
+
+**三、定义本项目的 Setting**
+
+若为经验方法论文，明确学习任务、数据使用、独立单位、split、baseline、loss、metric、超参数选择、实验预算、验证与停止规则。
+
+若为综述，明确 review type、research questions、最近邻综述、语料范围、检索与纳入协议、taxonomy、比较维度及综合贡献。
+
+仅记录真实确认的设置；缺失项标记 unknown，不猜测，不把可选实验设为强制。
+
+**四、提出 AGENTS.md 项目专属最小修改**
+
+展示完整目标路径、待新增或调整的内容、保留的现有规则，以及哪些约束适用于代码、实验和论文。
+
+不要覆盖有效的项目规则，也不要先写入未确认的项目指令。
+
+**五、提出最小科研执行计划**
+
+按 Research Gap → Evidence Gap → Decisive Action → Actual Artifact → Acceptance 组织。
+
+优先提出当前最能改变论文主张的一项工作；明确什么条件下继续、调整或停止。
+
+**首次对齐要求**
+
+向我展示需要作者决定的实质性事项和你推荐的默认方案；只询问改变科学协议或任务边界的真实缺口。
+
+在我确认项目契约之前，不修改项目指令文件或执行依赖该确认的开发。
+
+确认之后，在我已授权的任务范围内直接执行，不再重复首次对齐或创建第二套流程。
+
+最终目标是使这个仓库持续产生可核验的科学进展，而不是持续产生计划、清单和审查报告。
+
+### 实际使用时还有一个版本问题
+
+目前 PaperTrace 的 GitHub 默认分支是 `master`，而本轮已经验证并合并的执行改进位于 `dev@daf4012`。
+
+因此，新建论文仓库时要核实实际使用的 PaperTrace 版本。如果从默认 `master` 克隆，不应直接假设它包含 `dev` 的全部更新；应使用经过核验的版本，或通过原有仓库同步机制进行受控集成。不要为了“升级到最新”而覆盖下游已有科学协议和作者修改。
+
+## 九、最后的推荐：初始化后只保留三项日常管理信息
+
+当项目完成首次对齐之后，我建议不要持续扩写 `AGENTS.md`。科研过程中真正需要高频更新的是 `paper/paper.yaml` 和已有 `paper/STATUS.md`。
+
+进展视图只需让作者随时回答：
+
+| 当前问题       | 应当看见的内容              |
+| ---------- | -------------------- |
+| Gap        | 目前哪条论文主张尚不能成立，缺少什么？  |
+| Action     | 下一项最有价值且已授权的实际工作是什么？ |
+| Acceptance | 通过什么真实产物或观察才能决定下一步？  |
+
+例如：
+
+| Gap                    | Action         | Acceptance       |
+| ---------------------- | -------------- | ---------------- |
+| 新表示的增益尚不能排除模型容量因素      | 执行容量匹配对照       | 真实结果及对应机制判断      |
+| 综述 taxonomy 与最近邻可能重复   | 核验最近邻原文与核心分类维度 | 比较矩阵及修订后的创新定位    |
+| 实验数据来源不足               | 补齐指定独立采集记录的来源  | 可追溯原始数据与合法 split |
+| 已有实验结果但 Results 仍是占位内容 | 修改结果段与图表       | 数值、统计单位、图和结论一致   |
+
+这里无需创建新的 gap tracker。直接在现有进展视图中只保留当前最重要的事项；其科学事实仍引用 `paper.yaml` 和原始产物。
+
+最终设计原则：
+
+> `AGENTS.md` 定义行动边界，`paper.yaml` 定义科学方向，实验或综述协议定义研究条件，真实产物决定进展。
+>
+> 不是所有工作都需要 Handoff，不是所有不确定性都需要用户确认，不是所有实验都需要完整论文级审查。
+>
+> 但所有科学主张都必须经得起相应的原文、理论或真实实验验证。
+
+这样，PaperTrace 才能同时适用于一篇需要 PyTorch、数据划分和 GPU 实验的小论文，以及一篇需要系统文献综合、taxonomy、科学图表与学术写作的综述，而不会因共享框架过重，把实际科研工作变成无止境的流程执行。
+
+本轮给出的是基于当前 PaperTrace 的项目级配置与执行方案，未擅自修改任何新论文仓库。
